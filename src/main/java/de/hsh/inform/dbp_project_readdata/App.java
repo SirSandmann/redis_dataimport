@@ -1,8 +1,6 @@
 package de.hsh.inform.dbp_project_readdata;
 
 import java.io.EOFException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.concurrent.TimeoutException;
 
 import org.pcap4j.core.NotOpenException;
@@ -195,62 +193,8 @@ public class App {
 	}
 
 	public static PackageData preprocessing(PackageData data) {
-		data = addWellknown(data);
-		data = addPrivate(data);
-		return data;
-	}
-
-	public static boolean checkWellknown(String s) {
-		// if port <= 1023 it is wellknown
-		// replace all non digits in the ports
-		return Integer.parseInt(s.replaceAll("\\D+", "")) <= 1023;
-	}
-
-	public static PackageData addWellknown(PackageData data) {
-		// if source Port exists check if < 1023 and add value to map
-		if (data.metaData.containsKey(sourcePort) && checkWellknown(data.metaData.get(sourcePort))) {
-			data.metaData.put(sourcePortWellKnown, "true");
-		} else if (data.metaData.containsKey(sourcePort)) {
-			data.metaData.put(sourcePortWellKnown, "false");
-		}
-
-		if (data.metaData.containsKey(destinationPort) && checkWellknown(data.metaData.get(destinationPort))) {
-			data.metaData.put(destinationPortWellKnown, "true");
-		} else if (data.metaData.containsKey(destinationPort)) {
-			data.metaData.put(destinationPortWellKnown, "false");
-		}
-
-		return data;
-	}
-
-	public static boolean checkPrivateIp(String s) {
-		// check if in specific range
-		try {
-			return InetAddress.getByName(s.replace("/", "")).isSiteLocalAddress();
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-			//hard break in case of wrong ip
-			System.exit(0);
-			return false;
-		}
-	}
-
-	public static PackageData addPrivate(PackageData data) {
-		if (data.metaData.containsKey(sourceAddr)) {
-			if (checkPrivateIp(data.metaData.get(sourceAddr))) {
-				data.metaData.put(sourceAddrPriv, "true");
-			} else {
-				data.metaData.put(sourceAddrPriv, "false");
-			}
-		}
-
-		if (data.metaData.containsKey(destinationAddr)) {
-			if (checkPrivateIp(data.metaData.get(destinationAddr))) {
-				data.metaData.put(destinationAddrPriv, "true");
-			} else {
-				data.metaData.put(destinationAddrPriv, "false");
-			}
-		}
+		data = PackageData.addWellknown(data);
+		data = PackageData.addPrivate(data);
 		return data;
 	}
 
@@ -259,6 +203,8 @@ public class App {
 		try (Jedis jedis = pool.getResource()) {
 			jedis.hmset(cnt + ":meta", data.metaData);
 			jedis.hmset(cnt + ":data", data.dataData);
+			// set indexes
+			IndexData.setIndexes(jedis, data);
 		}
 	}
 
