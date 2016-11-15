@@ -18,7 +18,7 @@ public class IndexData {
 		IndexData sourcePortIndex = new IndexData();
 		IndexData destinationPortIndex = new IndexData();
 		
-		/* TODO: put in Array and loop */
+		/* TODO: put in Array and loop through*/
 		// indexTimeStamp
 		if(data.metaData.containsKey("timestamp")){
 			timeStampIndex.map.put(data.metaData.get("timestamp"), Double.valueOf(data.metaData.get("timestamp")));

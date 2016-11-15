@@ -9,14 +9,15 @@ public class PackageData {
 
 	Map<String, String> metaData = new HashMap<String, String>();
 	Map<String, String> dataData = new HashMap<String, String>();
-	
+
 	public static boolean checkPrivateIp(String s) {
 		// check if in specific range
 		try {
 			return InetAddress.getByName(s.replace("/", "")).isSiteLocalAddress();
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
-			// hard break in case of wrong ip
+			// hard break in case of wrong ip format --> shoudln't be possible
+			// due to check
 			System.exit(0);
 			return false;
 		}
@@ -40,7 +41,7 @@ public class PackageData {
 		}
 		return data;
 	}
-	
+
 	public static boolean checkWellknown(String s) {
 		// if port <= 1023 it is wellknown
 		// replace all non digits in the ports
@@ -63,4 +64,31 @@ public class PackageData {
 
 		return data;
 	}
+
+	public static boolean checkContainsByteSequence(String dataStringHex, String sequence) {
+		return dataStringHex.contains(sequence);
+	}
+
+	public static PackageData addContainsByteSequence(PackageData data, String sequence) {
+		//just if data is available
+		if(data.dataData.containsKey("rawData")){
+			String dataStringHex = "";
+			String dataString = data.dataData.get("rawData");
+			byte[] bytesData = dataString.getBytes();
+	
+			//0x kann eig weg, habs aber dring gelassen weil richtiges Format
+			for (byte b : bytesData) {
+				dataStringHex.concat("0x" + String.format("%02X ", b) + " ");
+			}
+			
+			//in case it contains then true other false
+			if(checkContainsByteSequence(dataStringHex, sequence)){
+				data.dataData.put("dataContains_" + sequence.replace(" ", ""), "true");
+			}else{
+				data.dataData.put("dataContains_" + sequence.replace(" ", ""), "false");
+			}
+		}
+		return data;
+	}
+
 }

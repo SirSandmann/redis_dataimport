@@ -98,7 +98,7 @@ public class App {
 
 		if (etherType.equals(EtherType.IPV4)) {
 			IpV4Packet ipv4 = ether.getPayload().get(IpV4Packet.class);
-
+			
 			// if valid ip4 package
 			if (ipv4.getHeader().hasValidChecksum(true)) {
 				// Destination and Source Address just accessable in the ip
@@ -195,6 +195,7 @@ public class App {
 	public static PackageData preprocessing(PackageData data) {
 		data = PackageData.addWellknown(data);
 		data = PackageData.addPrivate(data);
+		data = PackageData.addContainsByteSequence(data, " 0x35 0xAF 0xF8");
 		return data;
 	}
 
