@@ -46,6 +46,8 @@ public class App {
 
 	static final String sourceAddrPriv = "sourceAddrPriv";
 	static final String destinationAddrPriv = "destinationAddrPriv";
+	
+	static final String dataContains = "dataContains_";
 
 	public static void main(String[] args)
 			throws PcapNativeException, EOFException, TimeoutException, NotOpenException {

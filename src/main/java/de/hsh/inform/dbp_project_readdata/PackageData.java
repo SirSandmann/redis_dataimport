@@ -71,9 +71,9 @@ public class PackageData {
 
 	public static PackageData addContainsByteSequence(PackageData data, String sequence) {
 		//just if data is available
-		if(data.dataData.containsKey("rawData")){
+		if(data.dataData.containsKey(App.rawData)){
 			String dataStringHex = "";
-			String dataString = data.dataData.get("rawData");
+			String dataString = data.dataData.get(App.rawData);
 			byte[] bytesData = dataString.getBytes();
 	
 			//0x kann eig weg, habs aber dring gelassen weil richtiges Format
@@ -83,9 +83,9 @@ public class PackageData {
 			
 			//in case it contains then true other false
 			if(checkContainsByteSequence(dataStringHex, sequence)){
-				data.dataData.put("dataContains_" + sequence.replace(" ", ""), "true");
+				data.dataData.put(App.dataContains + sequence.replace(" ", ""), "true");
 			}else{
-				data.dataData.put("dataContains_" + sequence.replace(" ", ""), "false");
+				data.dataData.put(App.dataContains + sequence.replace(" ", ""), "false");
 			}
 		}
 		return data;

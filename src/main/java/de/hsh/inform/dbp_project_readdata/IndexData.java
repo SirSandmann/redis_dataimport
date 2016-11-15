@@ -13,6 +13,7 @@ public class IndexData {
 	
 	public static void setIndexes(Jedis jedis, PackageData data) {
 		IndexData timeStampIndex = new IndexData();
+		IndexData containsByteSequenceIndex = new IndexData();
 		IndexData sourceAddrIndex = new IndexData();
 		IndexData destinationAddrIndex = new IndexData();
 		IndexData sourcePortIndex = new IndexData();
@@ -49,6 +50,18 @@ public class IndexData {
 					Double.valueOf(data.metaData.get(App.destinationPort).replaceAll("\\D+", "")));
 		}
 		
+		// ----------------------- DATADATA------------------------------
+		if(data.dataData.containsKey("dataContains_0x350xAF0xF8")){
+			if(Boolean.valueOf(data.dataData.get("dataContains_0x350xAF0xF8"))){
+				containsByteSequenceIndex.map.put(data.dataData.get("dataContains_0x350xAF0xF8"), 1.0 );
+			}else{
+				containsByteSequenceIndex.map.put(data.dataData.get("dataContains_0x350xAF0xF8"), 0.0 );
+			}
+		}
+		
+		if(!containsByteSequenceIndex.isEmpty()){
+			jedis.zadd("indexDataContains_0x350xAF0xF8", timeStampIndex.map);
+		}
 		
 		if(!timeStampIndex.isEmpty()){
 			jedis.zadd("indexTimestamp", timeStampIndex.map);
