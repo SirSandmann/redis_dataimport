@@ -11,7 +11,7 @@ public class IndexData {
 		return this.map.isEmpty();
 	}
 	
-	public static void setIndexes(Jedis jedis, PackageData data) {
+	public static void setIndexes(Jedis jedis, AddInformation data) {
 		IndexData timeStampIndex = new IndexData();
 		IndexData containsByteSequenceIndex = new IndexData();
 		IndexData sourceAddrIndex = new IndexData();
@@ -60,7 +60,7 @@ public class IndexData {
 		}
 		
 		if(!containsByteSequenceIndex.isEmpty()){
-			jedis.zadd("indexDataContains_0x350xAF0xF8", timeStampIndex.map);
+			jedis.zadd("indexDataContains_0x350xAF0xF8", containsByteSequenceIndex.map);
 		}
 		
 		if(!timeStampIndex.isEmpty()){

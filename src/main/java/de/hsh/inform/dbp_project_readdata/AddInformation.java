@@ -5,7 +5,7 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PackageData {
+public class AddInformation {
 
 	Map<String, String> metaData = new HashMap<String, String>();
 	Map<String, String> dataData = new HashMap<String, String>();
@@ -23,7 +23,7 @@ public class PackageData {
 		}
 	}
 
-	public static PackageData addPrivate(PackageData data) {
+	public static AddInformation addPrivate(AddInformation data) {
 		if (data.metaData.containsKey(App.sourceAddr)) {
 			if (checkPrivateIp(data.metaData.get(App.sourceAddr))) {
 				data.metaData.put(App.sourceAddrPriv, "true");
@@ -48,7 +48,7 @@ public class PackageData {
 		return Integer.parseInt(s.replaceAll("\\D+", "")) <= 1023;
 	}
 
-	public static PackageData addWellknown(PackageData data) {
+	public static AddInformation addWellknown(AddInformation data) {
 		// if source Port exists check if < 1023 and add value to map
 		if (data.metaData.containsKey(App.sourcePort) && checkWellknown(data.metaData.get(App.sourcePort))) {
 			data.metaData.put(App.sourcePortWellKnown, "true");
@@ -69,7 +69,7 @@ public class PackageData {
 		return dataStringHex.contains(sequence);
 	}
 
-	public static PackageData addContainsByteSequence(PackageData data, String sequence) {
+	public static AddInformation addContainsByteSequence(AddInformation data, String sequence) {
 		//just if data is available
 		if(data.dataData.containsKey(App.rawData)){
 			String dataStringHex = "";

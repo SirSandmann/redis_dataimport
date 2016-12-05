@@ -74,7 +74,7 @@ public class App {
 			int len = packet.length();
 
 			// create Packagedata Class and put time in meta and data in data
-			PackageData data = new PackageData();
+			AddInformation data = new AddInformation();
 			data.metaData.put("timestamp", ts + ms + "");
 			data.dataData.put("dataLength", len + "");
 
@@ -91,7 +91,7 @@ public class App {
 		pool.destroy();
 	}
 
-	public static void handleEthernetPacket(EthernetPacket ether, PackageData data, int cnt, String prefix) {
+	public static void handleEthernetPacket(EthernetPacket ether, AddInformation data, int cnt, String prefix) {
 		// depending on the ethernet type, interpret the contents of the
 		// ethernet
 		// frame in different ways
@@ -124,7 +124,7 @@ public class App {
 
 	}
 
-	public static PackageData handleIpV4Packet(IpV4Packet ipv4, PackageData data, String prefix) {
+	public static AddInformation handleIpV4Packet(IpV4Packet ipv4, AddInformation data, String prefix) {
 		/*
 		 * TODO: Replace all name of KEys with constants
 		 */
@@ -150,14 +150,14 @@ public class App {
 		return data;
 	}
 
-	public static PackageData addDestinationAndSourceAddr(IpV4Packet ipv4, PackageData data) {
+	public static AddInformation addDestinationAndSourceAddr(IpV4Packet ipv4, AddInformation data) {
 		// meta data
 		data.metaData.put(destinationAddr, ipv4.getHeader().getDstAddr() + "");
 		data.metaData.put(sourceAddr, ipv4.getHeader().getSrcAddr() + "");
 		return data;
 	}
 
-	public static PackageData handleArpPacket(ArpPacket arp, PackageData data, String prefix) {
+	public static AddInformation handleArpPacket(ArpPacket arp, AddInformation data, String prefix) {
 		System.out.println(prefix + "Storing ARP packet");
 		// meta
 		data.metaData.put(sourceAddr, arp.getHeader().getSrcProtocolAddr() + "");
@@ -167,7 +167,7 @@ public class App {
 		return data;
 	}
 
-	public static PackageData handleTcpPacket(TcpPacket tcp, PackageData data, String prefix) {
+	public static AddInformation handleTcpPacket(TcpPacket tcp, AddInformation data, String prefix) {
 		System.out.println(prefix + "Storing TCP packet");
 		// meta
 		data.metaData.put(sourcePort, tcp.getHeader().getSrcPort() + "");
@@ -177,7 +177,7 @@ public class App {
 		return data;
 	}
 
-	public static PackageData handleUdpPacket(UdpPacket udp, PackageData data, String prefix) {
+	public static AddInformation handleUdpPacket(UdpPacket udp, AddInformation data, String prefix) {
 		System.out.println(prefix + "Storing UDP packet");
 		// meta
 		data.metaData.put(sourcePort, udp.getHeader().getSrcPort() + "");
@@ -187,25 +187,25 @@ public class App {
 		return data;
 	}
 
-	public static PackageData handleIcmpPacket(IcmpV4CommonPacket icmp, PackageData data, String prefix) {
+	public static AddInformation handleIcmpPacket(IcmpV4CommonPacket icmp, AddInformation data, String prefix) {
 		System.out.println(prefix + "Storing ICMP packet");
 		// data
 		data.dataData.put(rawData, icmp.getRawData() + "");
 		return data;
 	}
 
-	public static PackageData preprocessing(PackageData data) {
-		data = PackageData.addWellknown(data);
-		data = PackageData.addPrivate(data);
-		data = PackageData.addContainsByteSequence(data, " 0x35 0xAF 0xF8");
+	public static AddInformation preprocessing(AddInformation data) {
+		data = AddInformation.addWellknown(data);
+		data = AddInformation.addPrivate(data);
+		data = AddInformation.addContainsByteSequence(data, " 0x35 0xAF 0xF8");
 		return data;
 	}
 
-	public static void importDataIntoRedis(int cnt, PackageData data) {
+	public static void importDataIntoRedis(int cnt, AddInformation data) {
 		data = preprocessing(data);
 		try (Jedis jedis = pool.getResource()) {
-			jedis.hmset(cnt + ":meta", data.metaData);
-			jedis.hmset(cnt + ":data", data.dataData);
+			jedis.hmset("meta:" + cnt, data.metaData);
+			jedis.hmset("data:" + cnt, data.dataData);
 			// set indexes
 			IndexData.setIndexes(jedis, data);
 		}
