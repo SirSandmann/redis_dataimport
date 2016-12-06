@@ -207,7 +207,7 @@ public class App {
 			jedis.hmset("meta:" + cnt, data.metaData);
 			jedis.hmset("data:" + cnt, data.dataData);
 			// set indexes
-			IndexData.setIndexes(jedis, data);
+			IndexData.setIndexes(jedis, data, cnt);
 		}
 	}
 
