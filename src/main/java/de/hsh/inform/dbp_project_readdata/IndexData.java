@@ -89,7 +89,7 @@ public class IndexData {
 		}
 
 		if (!destinationAddrIndex.isEmpty()) {
-			jedis.zadd("index:" + App.destinationPort, destinationAddrIndex.map);
+			jedis.zadd("index:" + App.destinationAddr, destinationAddrIndex.map);
 			jedis.lpush(indexSetDestAddr + data.metaData.get(App.destinationAddr).replaceAll("\\D+", ""), cnt + "");
 		}
 
