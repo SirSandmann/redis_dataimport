@@ -18,16 +18,20 @@ public class TestQueries {
 			// for measuring time
 			long startTime = System.nanoTime();
 
-			//activeConnections(jedis, "898691696", "898692070");
-			hostsConntectedTo(jedis, "209143215163");
+			// activeConnections(jedis, "898691696", "898692070");
+			// hostsConntectedTo(jedis, "209132068026");
+			// hostIncomingConnectionsWellknown(jedis);
+			// connectionOutsideHost(jedis);
+			getAllContaining(jedis);
 
 			long stopTime = System.nanoTime();
 			System.out.println("\n-------------- Duration ---------------------");
-			System.out.println(                
+			System.out.println(
 					TimeUnit.MILLISECONDS.convert(stopTime - startTime, TimeUnit.NANOSECONDS) + " Milliseconds");
 		}
 	}
 
+	// query 1
 	public static void activeConnections(Jedis jedis, String t1, String t2) {
 		Set<String> resultCounters = new HashSet<String>();
 		Set<String> keysTimeStamps = jedis.zrangeByScore("index:timestamp", t1, t2);
@@ -38,11 +42,13 @@ public class TestQueries {
 
 		// get the source and address values
 		for (String s : resultCounters) {
-			System.out.println(jedis.hget("meta:" + s, App.sourceAddr) + " and "
-					+ jedis.hget("meta:" + s, App.destinationAddr) + "\n");
+			System.out.println(
+					jedis.hget("meta:" + s, App.sourceAddr) + "\t and " + jedis.hget("meta:" + s, App.destinationAddr));
 		}
+		System.out.println("Total:" + resultCounters.size());
 	}
 
+	// query 2
 	public static void hostsConntectedTo(Jedis jedis, String ip) {
 		Integer port = 80;
 		List<Set<String>> groupKeys = new ArrayList<Set<String>>();
@@ -57,26 +63,24 @@ public class TestQueries {
 		groupKeys.add(jedis.zrangeByScore("index:" + App.destinationPort, port, port));
 
 		// Source get all IPS that are in the port and addr of source
-		resultCountersSource.addAll(jedis.lrange(groupKeys.get(0).toString().replace(",", "") // remove
-																								// the
-																								// commas
-				.replace("[", "") // remove the right bracket
+		resultCountersSource.addAll(jedis.lrange(groupKeys.get(0).toString().replace(",", "").replace("[", "") // remove
+																												// the
+																												// right
+																												// bracket
 				.replace("]", ""), 0, -1));
-		resultCountersSource.retainAll(jedis.lrange(groupKeys.get(1).toString().replace(",", "") // remove
-																									// the
-																									// commas
-				.replace("[", "") // remove the right bracket
+
+		resultCountersSource.retainAll(jedis.lrange(groupKeys.get(1).toString().replace(",", "").replace("[", "") // remove
+																													// the
+																													// right
+																													// bracket
 				.replace("]", ""), 0, -1));
 
 		// Destiation get all IPS that are in the port and addr of source
 		resultCountersDestination.addAll(jedis.lrange(groupKeys.get(2).toString().replace(",", "") // remove
-																									// the
-																									// commas
 				.replace("[", "") // remove the right bracket
 				.replace("]", ""), 0, -1));
+
 		resultCountersDestination.retainAll(jedis.lrange(groupKeys.get(3).toString().replace(",", "") // remove
-																										// the
-																										// commas
 				.replace("[", "") // remove the right bracket
 				.replace("]", ""), 0, -1));
 
@@ -91,14 +95,112 @@ public class TestQueries {
 			String dest = jedis.hget("meta:" + s, App.destinationAddr);
 
 			// remove all non numeric values
-			if (!src.replaceAll("\\D+", "").equals(ip)) {
+			if (!IndexData.convertIpAdress(src.replaceAll("[^\\w.]+", "")).equals(ip)) {
 				results.add(src);
 			} else {
 				results.add(dest);
 			}
 		}
-		System.out.println(results);
+
+		for (String s : results) {
+			System.out.println(s);
+		}
+
+		System.out.println("Total:" + results.size());
 
 	}
+
+	public static void hostIncomingConnectionsWellknown(Jedis jedis) {
+		List<Set<String>> groupKeys = new ArrayList<Set<String>>();
+		Set<String> resultCountersAddr = new HashSet<String>();
+		Set<String> resultCountersPort = new HashSet<String>();
+		Set<String> result = new HashSet<String>();
+
+		// all ports
+		groupKeys.add(jedis.zrange("index:" + App.destinationAddr, 0, -1));
+		groupKeys.add(jedis.zrangeByScore("index:" + App.destinationPort, 0, 1023));
+		System.out.println(groupKeys);
+
+		for (String s : groupKeys.get(0)) {
+			resultCountersAddr.addAll(jedis.lrange(s, 0, -1));
+		}
+
+		for (String s : groupKeys.get(1)) {
+			resultCountersPort.addAll(jedis.lrange(s, 0, -1));
+		}
+
+		resultCountersAddr.retainAll(resultCountersPort);
+
+		// get address values
+		for (String s : resultCountersAddr) {
+			result.add(jedis.hget("meta:" + s, App.destinationAddr));
+		}
+
+		// remove duplicates --> set
+		for (String s : result) {
+			System.out.println(s);
+		}
+
+		System.out.println("Total:" + result.size());
+
+	}
+
+	public static void connectionOutsideHost(Jedis jedis) {
+		List<Set<String>> groupKeys = new ArrayList<Set<String>>();
+		Set<String> resultCounters = new HashSet<String>();
+		Set<String> result = new HashSet<String>();
+
+		groupKeys.add(jedis.zrangeByScore("index:" + App.destinationAddr, "0", "10000000000"));
+		groupKeys.add(jedis.zrangeByScore("index:" + App.destinationAddr, "10255255255", "172160000000"));
+		groupKeys.add(jedis.zrangeByScore("index:" + App.destinationAddr, "172310255255", "192168000000"));
+		groupKeys.add(jedis.zrangeByScore("index:" + App.destinationAddr, "192168255255", "255255255255"));
+
+		groupKeys.add(jedis.zrangeByScore("index:" + App.sourceAddr, "0", "10000000000"));
+		groupKeys.add(jedis.zrangeByScore("index:" + App.sourceAddr, "10255255255", "172160000000"));
+		groupKeys.add(jedis.zrangeByScore("index:" + App.sourceAddr, "172310255255", "192168000000"));
+		groupKeys.add(jedis.zrangeByScore("index:" + App.sourceAddr, "192168255255", "255255255255"));
+
+		for (int i = 0; i < groupKeys.size(); i++) {
+			for (String s : groupKeys.get(i)) {
+				resultCounters.addAll(jedis.lrange(s, 0, -1));
+			}
+		}
+
+		for (String s : resultCounters) {
+			if (!Boolean.valueOf(jedis.hget("meta:" + s, App.destinationAddrPriv))) {
+				result.add(jedis.hget("meta:" + s, App.destinationAddr));
+			}
+
+			if (!Boolean.valueOf(jedis.hget("meta:" + s, App.sourceAddrPriv))) {
+				result.add(jedis.hget("meta:" + s, App.sourceAddr));
+			}
+		}
+
+		// remove duplicates --> set
+		for (String s : result) {
+			System.out.println(s);
+		}
+
+		System.out.println("Total:" + result.size());
+	}
+	
+	
+	public static void getAllContaining(Jedis jedis) {
+		Set<String> indexContains = new HashSet<String>();
+		Set<String> resultCounters = new HashSet<String>();
+		indexContains.addAll(jedis.zrangeByScore("index:" + "dataContains_0x350xAF0xF8", 1, 1));
+		
+		// remove duplicates --> set
+		for (String s : indexContains) {
+			resultCounters.addAll(jedis.lrange(s, 0, -1));
+		}
+		
+		for (String s : resultCounters) {
+			System.out.println("Package with Counter: " + s);
+		}
+		
+		
+	}
+	
 
 }
