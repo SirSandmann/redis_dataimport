@@ -11,6 +11,29 @@ public class IndexData {
 		return this.map.isEmpty();
 	}
 
+	public static String appendZeros(String s, Integer a) {
+		String zeroString = "";
+		for (int i = 0; i < a; i++) {
+			zeroString = "0" + zeroString;
+		}
+		return zeroString + s;
+	}
+
+	public static String convertIpAdress(String s) {
+		String[] address = s.split("\\.");
+
+		for (int i = 0; i < 4; i++) {
+			if (i > 0) {
+				if (address[i].length() == 1) {
+					address[i] = appendZeros(address[i], 2);
+				} else if (address[i].length() == 2) {
+					address[i] = appendZeros(address[i], 1);
+				}
+			}
+		}
+		return String.join("", address);
+	}
+
 	public static void setIndexes(Jedis jedis, AddInformation data, int cnt) {
 		IndexData timeStampIndex = new IndexData();
 		IndexData containsByteSequenceIndex = new IndexData();
@@ -36,15 +59,14 @@ public class IndexData {
 
 		// sourceAddr
 		if (data.metaData.containsKey(App.sourceAddr)) {
-			sourceAddrIndex.map.put(indexSetSourceAddr + data.metaData.get(App.sourceAddr).replaceAll("\\D+", ""),
-					Double.valueOf(data.metaData.get(App.sourceAddr).replaceAll("\\D+", "")));
+			String adr = data.metaData.get(App.sourceAddr).replaceAll("[^\\w.]+", "");
+			sourceAddrIndex.map.put(indexSetSourceAddr + convertIpAdress(adr), Double.valueOf(convertIpAdress(adr)));
 		}
 
 		// destinationAddr
 		if (data.metaData.containsKey(App.destinationAddr)) {
-			destinationAddrIndex.map.put(
-					indexSetDestAddr + data.metaData.get(App.destinationAddr).replaceAll("\\D+", ""),
-					Double.valueOf(data.metaData.get(App.destinationAddr).replaceAll("\\D+", "")));
+			String adr = data.metaData.get(App.destinationAddr).replaceAll("[^\\w.]+", "");
+			destinationAddrIndex.map.put(indexSetDestAddr + convertIpAdress(adr), Double.valueOf(convertIpAdress(adr)));
 		}
 
 		// sourcePort
@@ -73,8 +95,7 @@ public class IndexData {
 
 		// Add Sets an Indexes
 		if (!containsByteSequenceIndex.isEmpty()) {
-			jedis.zadd("index:" + dataContains_String + data.dataData.get(dataContains_String),
-					containsByteSequenceIndex.map);
+			jedis.zadd("index:" + dataContains_String, containsByteSequenceIndex.map);
 			jedis.lpush("indexSets:" + dataContains_String + ":" + data.dataData.get(dataContains_String), cnt + "");
 		}
 
@@ -85,12 +106,15 @@ public class IndexData {
 
 		if (!sourceAddrIndex.isEmpty()) {
 			jedis.zadd("index:" + App.sourceAddr, sourceAddrIndex.map);
-			jedis.lpush(indexSetSourceAddr + data.metaData.get(App.sourceAddr).replaceAll("\\D+", ""), cnt + "");
+			jedis.lpush(
+					indexSetSourceAddr + convertIpAdress(data.metaData.get(App.sourceAddr).replaceAll("[^\\w.]+", "")),
+					cnt + "");
 		}
 
 		if (!destinationAddrIndex.isEmpty()) {
 			jedis.zadd("index:" + App.destinationAddr, destinationAddrIndex.map);
-			jedis.lpush(indexSetDestAddr + data.metaData.get(App.destinationAddr).replaceAll("\\D+", ""), cnt + "");
+			jedis.lpush(indexSetDestAddr + convertIpAdress(data.metaData.get(App.destinationAddr).replaceAll("[^\\w.]+", "")),
+					cnt + "");
 		}
 
 		if (!sourcePortIndex.isEmpty()) {
@@ -103,4 +127,5 @@ public class IndexData {
 			jedis.lpush(indexSetDestPort + data.metaData.get(App.destinationPort).replaceAll("\\D+", ""), cnt + "");
 		}
 	}
+
 }
