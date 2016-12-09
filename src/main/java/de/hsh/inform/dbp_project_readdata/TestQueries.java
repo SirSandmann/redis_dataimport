@@ -22,7 +22,8 @@ public class TestQueries {
 			// hostsConntectedTo(jedis, "209132068026");
 			// hostIncomingConnectionsWellknown(jedis);
 			// connectionOutsideHost(jedis);
-			getAllContaining(jedis);
+			// getAllContaining(jedis);
+			getDatavolumeBetweenConnection(jedis, "206132025071", "172016113204");
 
 			long stopTime = System.nanoTime();
 			System.out.println("\n-------------- Duration ---------------------");
@@ -183,24 +184,62 @@ public class TestQueries {
 
 		System.out.println("Total:" + result.size());
 	}
-	
-	
+
 	public static void getAllContaining(Jedis jedis) {
 		Set<String> indexContains = new HashSet<String>();
 		Set<String> resultCounters = new HashSet<String>();
 		indexContains.addAll(jedis.zrangeByScore("index:" + "dataContains_0x350xAF0xF8", 1, 1));
-		
+
 		// remove duplicates --> set
 		for (String s : indexContains) {
 			resultCounters.addAll(jedis.lrange(s, 0, -1));
 		}
-		
+
 		for (String s : resultCounters) {
 			System.out.println("Package with Counter: " + s);
 		}
-		
-		
+
 	}
-	
+
+	public static void getDatavolumeBetweenConnection(Jedis jedis, String ip1, String ip2) {
+		double dataVolume = 0;
+		double duration = 0;
+		List<Set<String>> groupKeys = new ArrayList<Set<String>>();
+		Set<String> resultCounters = new HashSet<String>();
+		Set<Double> resultTimeStamp = new HashSet<Double>();
+
+		// Source Addr
+		groupKeys.add(jedis.zrangeByScore("index:" + App.sourceAddr, ip1, ip1));
+		groupKeys.add(jedis.zrangeByScore("index:" + App.sourceAddr, ip2, ip2));
+		groupKeys.add(jedis.zrangeByScore("index:" + App.destinationAddr, ip1, ip1));
+		groupKeys.add(jedis.zrangeByScore("index:" + App.destinationAddr, ip2, ip2));
+
+		for (int i = 0; i < groupKeys.size(); i++) {
+			for (String s : groupKeys.get(i)) {
+				resultCounters.addAll(jedis.lrange(s, 0, -1));
+			}
+		}
+
+		for (String s : resultCounters) {
+			String destAddr = IndexData
+					.convertIpAdress(jedis.hget("meta:" + s, App.destinationAddr).replaceAll("[^\\w.]+", ""));
+			String sourceAddr = IndexData
+					.convertIpAdress(jedis.hget("meta:" + s, App.sourceAddr).replaceAll("[^\\w.]+", ""));
+
+			if ((destAddr.equals(ip1) || destAddr.equals(ip2)) && (sourceAddr.equals(ip1) || sourceAddr.equals(ip2))) {
+				dataVolume += Double.valueOf(jedis.hget("data:" + s, "dataLength"));
+				resultTimeStamp.add(Double.valueOf(jedis.hget("meta:" + s, "timestamp")));
+			}
+		}
+
+		double max = resultTimeStamp.stream().mapToDouble((x) -> x).max().orElseThrow(IllegalStateException::new);
+		double min = resultTimeStamp.stream().mapToDouble((x) -> x).min().orElseThrow(IllegalStateException::new);
+
+		duration = max - min;
+
+		System.out.println("Duration: " + duration);
+		System.out.println("Datavolume: " + dataVolume + "Bytes");
+		System.out.printf("%.2f :Bytes pro Minute", duration * 100 * 60 / dataVolume);
+	}
 
 }

@@ -197,7 +197,7 @@ public class App {
 	public static AddInformation preprocessing(AddInformation data) {
 		data = AddInformation.addWellknown(data);
 		data = AddInformation.addPrivate(data);
-		data = AddInformation.addContainsByteSequence(data, " 0x35 0xAF 0xF8");
+		data = AddInformation.addContainsByteSequence(data, "0x35 0xAF 0xF8");
 		return data;
 	}
 
