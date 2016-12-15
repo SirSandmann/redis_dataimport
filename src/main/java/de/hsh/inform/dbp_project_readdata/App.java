@@ -54,7 +54,9 @@ public class App {
 
 		String filename = System.getProperty("user.dir") + "/data_dumps/tcpdump";
 		PcapHandle handle = Pcaps.openOffline(filename);
-		int cnt = 0;
+		//for signed long --> 2 ^64
+		long cnt = 0L;
+		cnt = pool.getResource().dbSize();
 		for (;;) {
 			// loop over all packets in the pcap file
 
@@ -91,7 +93,7 @@ public class App {
 		pool.destroy();
 	}
 
-	public static void handleEthernetPacket(EthernetPacket ether, AddInformation data, int cnt, String prefix) {
+	public static void handleEthernetPacket(EthernetPacket ether, AddInformation data, long cnt, String prefix) {
 		// depending on the ethernet type, interpret the contents of the
 		// ethernet
 		// frame in different ways
@@ -201,7 +203,7 @@ public class App {
 		return data;
 	}
 
-	public static void importDataIntoRedis(int cnt, AddInformation data) {
+	public static void importDataIntoRedis(long cnt, AddInformation data) {
 		data = preprocessing(data);
 		try (Jedis jedis = pool.getResource()) {
 			jedis.hmset("meta:" + cnt, data.metaData);

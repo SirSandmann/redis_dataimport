@@ -16,16 +16,18 @@ public class TestQueries {
 	public static void main(String[] args) {
 		try (Jedis jedis = pool.getResource()) {
 			// for measuring time
+			System.out.println("Processing...");
 			long startTime = System.nanoTime();
-
 			// activeConnections(jedis, "898691696", "898692070");
-			// hostsConntectedTo(jedis, "209132068026");
+			hostsConntectedTo(jedis, "152.163.210.8", 80);
 			// hostIncomingConnectionsWellknown(jedis);
 			// connectionOutsideHost(jedis);
+			/* TODO überprüfen */
 			// getAllContaining(jedis);
-			getDatavolumeBetweenConnection(jedis, "206132025071", "172016113204");
+			// getDatavolumeBetweenConnection(jedis, "206.132.25.71", "172.16.113.204");
 
 			long stopTime = System.nanoTime();
+			System.out.println("Finished");
 			System.out.println("\n-------------- Duration ---------------------");
 			System.out.println(
 					TimeUnit.MILLISECONDS.convert(stopTime - startTime, TimeUnit.NANOSECONDS) + " Milliseconds");
@@ -50,8 +52,8 @@ public class TestQueries {
 	}
 
 	// query 2
-	public static void hostsConntectedTo(Jedis jedis, String ip) {
-		Integer port = 80;
+	public static void hostsConntectedTo(Jedis jedis, String ip, int port) {
+		ip = IndexData.convertIpAdress(ip);
 		List<Set<String>> groupKeys = new ArrayList<Set<String>>();
 		Set<String> resultCountersDestination = new HashSet<String>();
 		Set<String> resultCountersSource = new HashSet<String>();
@@ -64,19 +66,13 @@ public class TestQueries {
 		groupKeys.add(jedis.zrangeByScore("index:" + App.destinationPort, port, port));
 
 		// Source get all IPS that are in the port and addr of source
-		resultCountersSource.addAll(jedis.lrange(groupKeys.get(0).toString().replace(",", "").replace("[", "") // remove
-																												// the
-																												// right
-																												// bracket
-				.replace("]", ""), 0, -1));
+		resultCountersSource.addAll(
+				jedis.lrange(groupKeys.get(0).toString().replace(",", "").replace("[", "").replace("]", ""), 0, -1));
 
-		resultCountersSource.retainAll(jedis.lrange(groupKeys.get(1).toString().replace(",", "").replace("[", "") // remove
-																													// the
-																													// right
-																													// bracket
-				.replace("]", ""), 0, -1));
+		resultCountersSource.retainAll(
+				jedis.lrange(groupKeys.get(1).toString().replace(",", "").replace("[", "").replace("]", ""), 0, -1));
 
-		// Destiation get all IPS that are in the port and addr of source
+		// Destination get all IPS that are in the port and addr of source
 		resultCountersDestination.addAll(jedis.lrange(groupKeys.get(2).toString().replace(",", "") // remove
 				.replace("[", "") // remove the right bracket
 				.replace("]", ""), 0, -1));
@@ -202,6 +198,8 @@ public class TestQueries {
 	}
 
 	public static void getDatavolumeBetweenConnection(Jedis jedis, String ip1, String ip2) {
+		ip1 = IndexData.convertIpAdress(ip1);
+		ip2 = IndexData.convertIpAdress(ip2);
 		double dataVolume = 0;
 		double duration = 0;
 		List<Set<String>> groupKeys = new ArrayList<Set<String>>();
