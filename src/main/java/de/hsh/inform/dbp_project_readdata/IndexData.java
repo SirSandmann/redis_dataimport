@@ -20,21 +20,26 @@ public class IndexData {
 	}
 
 	public static String convertIpAdress(String s) {
-		String[] address = s.split("\\.");
-
-		for (int i = 0; i < 4; i++) {
-			if (i > 0) {
-				if (address[i].length() == 1) {
-					address[i] = appendZeros(address[i], 2);
-				} else if (address[i].length() == 2) {
-					address[i] = appendZeros(address[i], 1);
+		if(s.contains(".")){
+			s = s.replaceAll("[^\\w.]+", "");
+			String[] address = s.split("\\.");
+	
+			for (int i = 0; i < 4; i++) {
+				if (i > 0) {
+					if (address[i].length() == 1) {
+						address[i] = appendZeros(address[i], 2);
+					} else if (address[i].length() == 2) {
+						address[i] = appendZeros(address[i], 1);
+					}
 				}
 			}
+			return String.join("", address);
+		}else{
+			return s;
 		}
-		return String.join("", address);
 	}
 
-	public static void setIndexes(Jedis jedis, AddInformation data, int cnt) {
+	public static void setIndexes(Jedis jedis, AddInformation data, long cnt) {
 		IndexData timeStampIndex = new IndexData();
 		IndexData containsByteSequenceIndex = new IndexData();
 		IndexData sourceAddrIndex = new IndexData();
